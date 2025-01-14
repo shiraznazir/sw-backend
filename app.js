@@ -3,7 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const mongoose = require('mongoose');
 const cors = require('cors');
-import dotenv from "dotenv";
+const dotenv = require("dotenv");
 
 
 dotenv.config();
