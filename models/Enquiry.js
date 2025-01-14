@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 // Customer Schema
 const customerSchema = new mongoose.Schema({
@@ -18,4 +18,7 @@ const customerSchema = new mongoose.Schema({
 }, { timestamps: true }); // Adds createdAt and updatedAt fields
 
 // Export the Customer model
-module.exports = mongoose.model('Customer', customerSchema);
+
+const Customer = mongoose.model('Customer', customerSchema);
+
+export default Customer; 

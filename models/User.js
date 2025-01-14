@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 // Define the User Schema
 const userSchema = new mongoose.Schema(
@@ -39,7 +39,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// ✅ Prevent model overwrite error
-const User = mongoose.models.User || mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+export default userSchema; 

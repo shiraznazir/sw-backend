@@ -1,11 +1,10 @@
-require('dotenv').config();  // Load environment variables from .env
-const express = require('express');
-const multer = require('multer');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require("dotenv");
+import dotenv from 'dotenv';
+import express from 'express';
+import multer from 'multer';
+import mongoose from 'mongoose';
+import cors from 'cors';
 
-
+// Load environment variables from .env
 dotenv.config();
 
 const app = express();
@@ -33,13 +32,16 @@ mongoose
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((error) => console.error("❌ MongoDB connection error:", error));
 
-app.use('/', (req, res)=>{
-  return res.status(200).json("Hello Service walah")
-})
+app.use('/', (req, res) => {
+  return res.status(200).json("Hello Service walah");
+});
 
-// Routes
-app.use('/api/v1/enquiry', require('./routes/enquiry'));
-app.use('/api/v1/auth', require('./routes/auth'));
+// Routes (use import syntax for modules)
+import enquiryRoutes from './routes/enquiry.js';
+import authRoutes from './routes/auth.js';
+
+app.use('/api/v1/enquiry', enquiryRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // Start server
 const PORT = process.env.PORT || 8080;
@@ -48,4 +50,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
 
-module.exports = app;
+// Use export default instead of module.exports
+export default app;

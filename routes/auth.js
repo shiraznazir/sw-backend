@@ -1,9 +1,10 @@
-const express = require("express");
-const bcrypt = require("bcryptjs"); // ✅ For password hashing
-const User = require("../models/User");
-const { generateToken } = require("../utils/jwt");
-const authMiddleware = require("../middleware/auth");
-const crypto = require("crypto");
+import express from 'express';
+import bcrypt from 'bcryptjs'; // ✅ For password hashing
+import User from '../models/User.js'; 
+import { generateToken } from '../utils/jwt.js';
+import authMiddleware from '../middleware/auth.js';
+import crypto from 'crypto';
+
 const router = express.Router();
 
 // ✅ REGISTER ROUTE
@@ -113,4 +114,4 @@ router.get("/profile", authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

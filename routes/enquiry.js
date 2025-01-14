@@ -1,7 +1,7 @@
-const express = require('express');
-const multer = require('multer');
-const crypto = require('crypto');
-const Customer = require('../models/Enquiry');
+import express from 'express';
+import multer from 'multer';
+import crypto from 'crypto';
+import Customer from '../models/Enquiry.js'; 
 
 const router = express.Router();
 
@@ -66,4 +66,4 @@ router.post('/', upload.none(), async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
