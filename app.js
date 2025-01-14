@@ -32,10 +32,6 @@ mongoose
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((error) => console.error("❌ MongoDB connection error:", error));
 
-app.use('/', (req, res) => {
-  return res.status(200).json("Hello Service walah");
-});
-
 // Routes (use import syntax for modules)
 import enquiryRoutes from './routes/enquiry.js';
 import authRoutes from './routes/auth.js';

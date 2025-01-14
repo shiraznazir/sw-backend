@@ -35,7 +35,7 @@ router.post('/', upload.none(), async (req, res) => {
   if (!name || !email || !mobileNumber || !pincode || !message || !address || !type) {
     return res.status(400).json({ message: 'All fields are required' });
   }
-
+  
   try {
     // Generate a unique call ID
     const callId = await generateUniqueCallId();
