@@ -18,14 +18,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // MongoDB connection
-const uri = process.env.MONGO_URI;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-mongoose.connect(uri)
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1);  // Exit process if connection fails
-  });
+if (!MONGODB_URI) {
+  throw new Error("⚠️ MongoDB URI is not defined in environment variables.");
+}
+
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => console.log("✅ Connected to MongoDB"))
+  .catch((error) => console.error("❌ MongoDB connection error:", error));
 
 app.use('/', (req, res)=>{
   return res.status(200).json("Hello Service walah")
@@ -36,7 +38,7 @@ app.use('/api/v1/enquiry', require('./routes/enquiry'));
 app.use('/api/v1/auth', require('./routes/auth'));
 
 // Start server
-const PORT = process.env.PORT || 8088;
+const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
