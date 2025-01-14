@@ -23,9 +23,6 @@ app.use(cors());
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://shirazdev:Js2nlikYLU3ONnEF@cluster0.nt89p.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
-console.log("Mongodb server ", MONGODB_URI);
-
-
 if (!MONGODB_URI) {
   throw new Error("⚠️ MongoDB URI is not defined in environment variables.");
 }
