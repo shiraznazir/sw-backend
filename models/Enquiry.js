@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 // Customer Schema
 const customerSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true },
+  email: { type: String, required: true, unique: false },
   mobileNumber: { type: String, required: true },
   pincode: { type: String, required: true },
   message: { type: String, required: true },

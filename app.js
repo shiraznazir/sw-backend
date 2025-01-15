@@ -18,7 +18,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Enable CORS
-app.use(cors());
+app.use(cors({
+  origin: 'https://www.servicewalah.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true 
+}));
 
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://shirazdev:Js2nlikYLU3ONnEF@cluster0.nt89p.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
