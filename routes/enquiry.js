@@ -27,14 +27,14 @@ async function generateUniqueCallId() {
   return callId;
 }
 
-router.get('/', (req, res)=>{
+router.get('/data', (req, res)=>{
   try {
     res.status(201).json({
       message: 'Getting data from server',
       status: true,
     });
   } catch (error) {
-    res.status(500).json({ message: 'Error saving customer data', error: err.message });
+    res.status(500).json({ message: 'Error getting customer data', error: err.message });
   }
 })
 
