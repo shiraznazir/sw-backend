@@ -1,59 +1,69 @@
 import express from 'express';
-import bcrypt from 'bcryptjs'; // ✅ For password hashing
-import User from '../models/User.js'; 
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js';
 import { generateToken } from '../utils/jwt.js';
 import authMiddleware from '../middleware/auth.js';
 import crypto from 'crypto';
+import validator from 'validator';
 
 const router = express.Router();
 
+// ✅ Helper: Generate Unique Employee ID
+const generateUniqueEmployeeId = async () => {
+  let employeeId;
+  let exists = true;
+  employeeId = `EMP-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
+  // while (exists) {
+  //   // Combines timestamp with random hex string for uniqueness
+  //   employeeId = `EMP-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
+  //   exists = await User.findOne({ employeeId });
+  // }
+
+  return employeeId;
+};
+
 // ✅ REGISTER ROUTE
 router.post("/register", async (req, res) => {
+  console.log("API hit for registration");
+
   const { username, mobile, email, password } = req.body;
 
   try {
-    // Validate input fields
+    // ✅ Input validation
     if (!username || !mobile || !email || !password) {
       return res.status(400).json({ message: "All fields are required", status: "error" });
     }
-
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "Email already in use", status: "error" });
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format", status: "error" });
     }
+    // ✅ Check if the email already exists
+    // const userExists = await User.findOne({ email });
 
-    // ✅ Generate a unique Employee ID
-    let employeeId;
-    let isUnique = false;
+    // if (userExists) {
+    //   return res.status(400).json({ message: "Email already in use", status: "error" });
+    // }
 
-    while (!isUnique) {
-      employeeId = `EMP-${crypto.randomBytes(3).toString("hex").toUpperCase()}`; // e.g., EMP-A1B2C3
-      const idExists = await User.findOne({ employeeId });
-      if (!idExists) {
-        isUnique = true;
-      }
-    }
+    // ✅ Generate a truly unique Employee ID
+    const employeeId = await generateUniqueEmployeeId();
 
     // ✅ Hash the password
-    // const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Create new user with Employee ID
+    // ✅ Create new user
     const user = new User({
       username,
       mobile,
       email,
-      password,
+      password: hashedPassword,
       employeeId,
     });
 
-    // Save user to the database
+    // ✅ Save user to the database
     await user.save();
 
-    // Generate JWT Token
+    // ✅ Generate JWT Token
     const token = generateToken(user._id);
 
-    // Send response with token and Employee ID
     res.status(201).json({
       message: "User registered successfully",
       employeeId: user.employeeId,
@@ -61,6 +71,7 @@ router.post("/register", async (req, res) => {
       status: "success",
     });
   } catch (error) {
+    console.error("Registration error:", error);
     res.status(500).json({ message: "Server error", status: "error" });
   }
 });
@@ -70,23 +81,18 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "User not found", status: "error" });
     }
 
-    // ✅ Check if the password is correct
-    const isMatch = password === user.password ? true : false;
-    
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Password invalid", status: "error" });
+      return res.status(400).json({ message: "Invalid password", status: "error" });
     }
 
-    // Generate JWT Token
     const token = generateToken(user._id);
 
-    // Send response with token
     res.status(200).json({
       message: "Login successful",
       token,
@@ -96,11 +102,12 @@ router.post("/login", async (req, res) => {
       status: "success",
     });
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ message: "Server error", status: "error" });
   }
 });
 
-// ✅ PROTECTED ROUTE EXAMPLE
+// ✅ PROTECTED PROFILE ROUTE
 router.get("/profile", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select("-password");

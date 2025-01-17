@@ -12,10 +12,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Mobile number is required"],
       trim: true,
-      match: [/^\d{10,15}$/, "Mobile number must be between 10-15 digits"],
+      match: [/^\d{10}$/, "Mobile number must be 10 digits"],
+      unique: true,
     },
     email: {
       type: String,
+      unique: true,
       required: [true, "Email is required"],
       unique: true,
       trim: true,
@@ -41,4 +43,4 @@ const userSchema = new mongoose.Schema(
 
 const User = mongoose.model('User', userSchema);
 
-export default userSchema; 
+export default User; 

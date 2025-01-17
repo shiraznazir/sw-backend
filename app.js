@@ -24,6 +24,8 @@ app.use(
       "https://www.servicewalah.com",
       "https://servicewalah.com",
       "www.servicewalah.com",
+      "http://localhost:3000",
+      "http://localhost:8080"
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
@@ -46,7 +48,9 @@ mongoose
 // Routes (use import syntax for modules)
 import enquiryRoutes from "./routes/enquiry.js";
 import authRoutes from "./routes/auth.js";
+import customerRoutes from "./routes/customer.js";
 
+app.use("/api/v1/customer", customerRoutes);
 app.use("/api/v1/enquiry", enquiryRoutes);
 app.use("/api/v1/auth", authRoutes);
 
