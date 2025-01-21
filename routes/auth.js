@@ -1,31 +1,27 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
-import { generateToken } from '../utils/jwt.js';
-import authMiddleware from '../middleware/auth.js';
-import crypto from 'crypto';
+import generateToken from "../middleware/generateToken.js";
+import verifyToken from '../middleware/verifyToken.js';
 import validator from 'validator';
+import crypto from 'crypto';
 
 const router = express.Router();
 
-// ✅ Helper: Generate Unique Employee ID
-const generateUniqueEmployeeId = async () => {
-  let employeeId;
+// ✅ Helper: Generate Unique User ID
+const generateUniqueUserId = async () => {
+  let userId;
   let exists = true;
-  employeeId = `EMP-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
-  // while (exists) {
-  //   // Combines timestamp with random hex string for uniqueness
-  //   employeeId = `EMP-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
-  //   exists = await User.findOne({ employeeId });
-  // }
-
-  return employeeId;
+  while (exists) {
+    userId = `USER-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
+    const userExists = await User.findOne({ userId });
+    if (!userExists) exists = false;
+  }
+  return userId;
 };
 
 // ✅ REGISTER ROUTE
 router.post("/register", async (req, res) => {
-  console.log("API hit for registration");
-
   const { username, mobile, email, password } = req.body;
 
   try {
@@ -36,26 +32,23 @@ router.post("/register", async (req, res) => {
     if (!validator.isEmail(email)) {
       return res.status(400).json({ message: "Invalid email format", status: "error" });
     }
+
     // ✅ Check if the email already exists
-    // const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "Email already in use", status: "error" });
+    }
 
-    // if (userExists) {
-    //   return res.status(400).json({ message: "Email already in use", status: "error" });
-    // }
-
-    // ✅ Generate a truly unique Employee ID
-    const employeeId = await generateUniqueEmployeeId();
-
-    // ✅ Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // ✅ Generate a truly unique User ID
+    const userId = await generateUniqueUserId();
 
     // ✅ Create new user
     const user = new User({
       username,
       mobile,
       email,
-      password: hashedPassword,
-      employeeId,
+      password,
+      userId,
     });
 
     // ✅ Save user to the database
@@ -66,7 +59,7 @@ router.post("/register", async (req, res) => {
 
     res.status(201).json({
       message: "User registered successfully",
-      employeeId: user.employeeId,
+      userId: user.userId,
       token,
       status: "success",
     });
@@ -96,7 +89,7 @@ router.post("/login", async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       token,
-      employeeId: user.employeeId,
+      userId: user.userId,
       username: user.username,
       email: user.email,
       status: "success",
@@ -108,7 +101,7 @@ router.post("/login", async (req, res) => {
 });
 
 // ✅ PROTECTED PROFILE ROUTE
-router.get("/profile", authMiddleware, async (req, res) => {
+router.get("/profile", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select("-password");
     if (!user) {

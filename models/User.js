@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 // Define the User Schema
 const userSchema = new mongoose.Schema(
@@ -17,7 +18,6 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      unique: true,
       required: [true, "Email is required"],
       unique: true,
       trim: true,
@@ -29,11 +29,13 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
     },
-    employeeId: {
+    userId: {
       type: String,
-      required: [true, "Employee ID is required"],
       unique: true,
       uppercase: true,
+      default: function () {
+        return `USER-${crypto.randomBytes(2).toString("hex").toUpperCase()}-${Date.now()}`;
+      },
     },
   },
   {
@@ -41,6 +43,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
-export default User; 
+export default User;

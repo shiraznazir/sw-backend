@@ -9,6 +9,9 @@ dotenv.config();
 
 const app = express();
 
+app.use('/uploads', express.static('uploads'));
+
+
 // Set up multer storage (memory storage for file uploads)
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -46,13 +49,16 @@ mongoose
   .catch((error) => console.error("❌ MongoDB connection error:", error));
 
 // Routes (use import syntax for modules)
-import enquiryRoutes from "./routes/enquiry.js";
 import authRoutes from "./routes/auth.js";
 import customerRoutes from "./routes/customer.js";
+import technicianRoutes from "./routes/technician.js";
+import brandsRoutes from "./routes/technician.js";
 
-app.use("/api/v1/customer", customerRoutes);
-app.use("/api/v1/enquiry", enquiryRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/customer", customerRoutes);
+app.use("/api/v1/technician", technicianRoutes);
+app.use("/api/v1/brands", brandsRoutes);
+
 
 // Start server
 const PORT = process.env.PORT || 8080;
