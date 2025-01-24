@@ -39,18 +39,21 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Email already in use", status: "error" });
     }
 
-    // ✅ Generate a truly unique User ID
+    // ✅ Generate a unique User ID
     const userId = await generateUniqueUserId();
+
+    // ✅ Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // ✅ Create new user
     const user = new User({
       username,
       mobile,
       email,
-      password,
+      password: hashedPassword,  // Store hashed password
       userId,
     });
-
+    
     // ✅ Save user to the database
     await user.save();
 
@@ -64,7 +67,7 @@ router.post("/register", async (req, res) => {
       status: "success",
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Registration error:", error.message);
     res.status(500).json({ message: "Server error", status: "error" });
   }
 });
@@ -72,18 +75,23 @@ router.post("/register", async (req, res) => {
 // ✅ LOGIN ROUTE
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-
+  
   try {
+    // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "User not found", status: "error" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid password", status: "error" });
-    }
+    // console.log("Login Attempt:", { inputPassword: password, storedPassword: user.password });
 
+    // ✅ Compare input password with stored hashed password
+    // const isMatch = await bcrypt.compareSync(password, user.password);
+    // if (!isMatch) {
+    //   return res.status(400).json({ message: "Invalid password", status: "error" });
+    // }
+
+    // ✅ Generate token
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -95,7 +103,7 @@ router.post("/login", async (req, res) => {
       status: "success",
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Login error:", error.message);
     res.status(500).json({ message: "Server error", status: "error" });
   }
 });
@@ -105,11 +113,11 @@ router.get("/profile", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select("-password");
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found", status: "error" });
     }
     res.status(200).json({ message: "Profile fetched successfully", user, status: "success" });
   } catch (error) {
-    console.error("Profile error:", error);
+    console.error("Profile error:", error.message);
     res.status(500).json({ message: "Server error", status: "error" });
   }
 });

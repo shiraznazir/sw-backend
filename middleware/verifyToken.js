@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET_KEY = process.env.JWT_SECRET
+const JWT_SECRET_KEY = process.env.JWT_SECRET || "servicewalahsaleemshirazzeeshanhashim"
 
 const verifyToken = (req, res, next) => {
   // Extract token from Authorization header

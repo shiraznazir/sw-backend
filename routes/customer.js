@@ -1,10 +1,16 @@
 import express from 'express';
+import multer from 'multer';  // Added missing multer import
 import Customer from '../models/Customer.js';
 import { nanoid } from 'nanoid';
-import verifyToken from '../middleware/verifyToken.js'; 
+import verifyToken from '../middleware/verifyToken.js';
 
 const router = express.Router();
 
+// Configure multer for handling multipart form data
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+// Function to generate unique call ID
 async function generateUniqueCallId() {
   let callId;
   let isUnique = false;
@@ -19,22 +25,22 @@ async function generateUniqueCallId() {
   return callId;
 }
 
-// Create a new customer
-router.post('/create', async (req, res) => {
+// ✅ Create a new customer
+router.post('/create', upload.none(), async (req, res) => {
   const { name, email, mobileNumber, pincode, message, address, type } = req.body;
 
   // Validation
   if (!name || !email || !mobileNumber || !pincode || !message || !address || !type) {
-    return res.status(400).json({ message: 'All fields are required' });
+    return res.status(400).json({ message: 'All fields are required', status: false });
   }
-  
+
   try {
     // Generate a unique call ID
     const callId = await generateUniqueCallId();
 
     // Save customer data to the database
     const newCustomer = new Customer({
-      callId,  // Attach the unique call ID
+      callId,
       name,
       email,
       mobileNumber,
@@ -42,7 +48,7 @@ router.post('/create', async (req, res) => {
       message,
       address,
       type,
-      status: 0,
+      status: 0,  // Default status
     });
 
     const savedCustomer = await newCustomer.save();
@@ -54,11 +60,11 @@ router.post('/create', async (req, res) => {
     });
   } catch (err) {
     console.error('Error saving customer:', err);
-    res.status(500).json({ message: 'Error saving customer data', error: err.message });
+    res.status(500).json({ message: 'Error saving customer data', error: err.message, status: false });
   }
 });
 
-// ✅ GET all customer data (sorted by created date)
+// ✅ GET all customer data (sorted by creation date)
 router.get('/', verifyToken, async (req, res) => {
   try {
     const customers = await Customer.find({ type: 'customer' }).sort({ createdAt: -1 });
@@ -73,17 +79,10 @@ router.get('/', verifyToken, async (req, res) => {
       createdAt: customer.createdAt,
     }));
 
-    res.status(200).json({
-      customers: customersData,
-      status: true,
-    });
+    res.status(200).json({ customers: customersData, status: true });
   } catch (err) {
     console.error('Error fetching customers:', err);
-    res.status(500).json({
-      message: 'Error fetching customer data',
-      error: err.message,
-      status: false,
-    });
+    res.status(500).json({ message: 'Error fetching customer data', error: err.message, status: false });
   }
 });
 
@@ -94,23 +93,13 @@ router.get('/:callId', verifyToken, async (req, res) => {
     const customer = await Customer.findOne({ type: 'customer', callId });
 
     if (!customer) {
-      return res.status(404).json({
-        message: 'Customer not found',
-        status: false,
-      });
+      return res.status(404).json({ message: 'Customer not found', status: false });
     }
 
-    res.status(200).json({
-      customer,
-      status: true,
-    });
+    res.status(200).json({ customer, status: true });
   } catch (err) {
-    console.error(`Error fetching customer with callId ${req.params.callId}:`, err);
-    res.status(500).json({
-      message: 'Error fetching customer data',
-      error: err.message,
-      status: false,
-    });
+    console.error(`Error fetching customer with callId ${callId}:`, err);
+    res.status(500).json({ message: 'Error fetching customer data', error: err.message, status: false });
   }
 });
 
@@ -127,24 +116,13 @@ router.put('/update/:callId', verifyToken, async (req, res) => {
     );
 
     if (!updatedCustomer) {
-      return res.status(404).json({
-        message: 'Customer not found',
-        status: false,
-      });
+      return res.status(404).json({ message: 'Customer not found', status: false });
     }
 
-    res.status(200).json({
-      message: 'Customer updated successfully',
-      customer: updatedCustomer,
-      status: true,
-    });
+    res.status(200).json({ message: 'Customer updated successfully', customer: updatedCustomer, status: true });
   } catch (err) {
-    console.error(`Error updating customer with callId ${req.params.callId}:`, err);
-    res.status(500).json({
-      message: 'Error updating customer data',
-      error: err.message,
-      status: false,
-    });
+    console.error(`Error updating customer with callId ${callId}:`, err);
+    res.status(500).json({ message: 'Error updating customer data', error: err.message, status: false });
   }
 });
 
@@ -154,11 +132,8 @@ router.post('/update/status/:callId', verifyToken, async (req, res) => {
     const { callId } = req.params;
     const { status } = req.body;
 
-    if (!status) {
-      return res.status(400).json({
-        message: 'Status is required',
-        status: false,
-      });
+    if (status === undefined) {
+      return res.status(400).json({ message: 'Status is required', status: false });
     }
 
     const updatedCustomer = await Customer.findOneAndUpdate(
@@ -168,24 +143,13 @@ router.post('/update/status/:callId', verifyToken, async (req, res) => {
     );
 
     if (!updatedCustomer) {
-      return res.status(404).json({
-        message: 'Customer not found',
-        status: false,
-      });
+      return res.status(404).json({ message: 'Customer not found', status: false });
     }
 
-    res.status(200).json({
-      message: 'Customer status updated successfully',
-      customer: updatedCustomer,
-      status: true,
-    });
+    res.status(200).json({ message: 'Customer status updated successfully', customer: updatedCustomer, status: true });
   } catch (err) {
-    console.error(`Error updating status for callId ${req.params.callId}:`, err);
-    res.status(500).json({
-      message: 'Error updating customer status',
-      error: err.message,
-      status: false,
-    });
+    console.error(`Error updating status for callId ${callId}:`, err);
+    res.status(500).json({ message: 'Error updating customer status', error: err.message, status: false });
   }
 });
 
@@ -196,10 +160,7 @@ router.post('/update/cancel/:callId', verifyToken, async (req, res) => {
     const { status, reason } = req.body;
 
     if (!status || !reason) {
-      return res.status(400).json({
-        message: 'Status and reason are required',
-        status: false,
-      });
+      return res.status(400).json({ message: 'Status and reason are required', status: false });
     }
 
     const updatedCustomer = await Customer.findOneAndUpdate(
@@ -209,24 +170,13 @@ router.post('/update/cancel/:callId', verifyToken, async (req, res) => {
     );
 
     if (!updatedCustomer) {
-      return res.status(404).json({
-        message: 'Customer not found',
-        status: false,
-      });
+      return res.status(404).json({ message: 'Customer not found', status: false });
     }
 
-    res.status(200).json({
-      message: 'Call cancelled successfully',
-      customer: updatedCustomer,
-      status: true,
-    });
+    res.status(200).json({ message: 'Call cancelled successfully', customer: updatedCustomer, status: true });
   } catch (err) {
-    console.error(`Error cancelling call for callId ${req.params.callId}:`, err);
-    res.status(500).json({
-      message: 'Error cancelling the call',
-      error: err.message,
-      status: false,
-    });
+    console.error(`Error cancelling call for callId ${callId}:`, err);
+    res.status(500).json({ message: 'Error cancelling the call', error: err.message, status: false });
   }
 });
 
