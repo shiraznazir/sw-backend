@@ -39,8 +39,8 @@ const technicianSchema = new mongoose.Schema({
   //   required: [true, 'Back image is required'],
   // },
   // Optional: Store images as binary data (Buffer) if you want to keep them in the DB
-  front_image: Buffer, 
-  back_image: Buffer,
+  // front_image: Buffer, 
+  // back_image: Buffer,
   area: {
     type: String,
     required: [true, 'Area is required'],

@@ -1,7 +1,7 @@
 import express from 'express';
-import Brand from '../models/Brand';
+import Brand from '../models/Brand.js';
 import { nanoid } from 'nanoid';  
-import verifyToken from './middleware/verifyToken'; 
+import verifyToken from '../middleware/verifyToken.js'; 
 
 const router = express.Router();
 
@@ -20,13 +20,16 @@ async function generateBrandId() {
   return brandId;
 }
 
-// Create a new brand (with token verification)
-router.post('/', verifyToken, async (req, res) => { 
-  const { brand } = req.body;
-
+// ✅ Create a new brand (with token verification)
+router.post('/create', verifyToken, async (req, res) => { 
+  const { brandName } = req.body;
+  
   // Validation
-  if (!brand) {
-    return res.status(400).json({ message: 'Brand name is compulsory' });
+  if (!brandName || typeof brandName !== 'string' || !brandName.trim()) {
+    return res.status(400).json({ 
+      message: 'Brand name is required and must be a valid string', 
+      status: "error" 
+    });
   }
 
   try {
@@ -35,8 +38,8 @@ router.post('/', verifyToken, async (req, res) => {
 
     // Save brand data to the database
     const newBrand = new Brand({
-      brandId: brandId,  // Attach the unique brand ID
-      brand,
+      brandId,  
+      brand: brandName.trim(),
     });
 
     const savedBrand = await newBrand.save();
@@ -44,29 +47,34 @@ router.post('/', verifyToken, async (req, res) => {
     res.status(201).json({
       message: 'Brand added successfully',
       brand: savedBrand, 
-      status: true,
+      status: "success",
     });
   } catch (err) {
     console.error('Error saving brand:', err);
-    res.status(500).json({ message: 'Error saving brand data', error: err.message });
+    res.status(500).json({ 
+      message: 'Error saving brand data', 
+      error: err.message, 
+      status: "error" 
+    });
   }
 });
 
 // ✅ GET all brands data (sorted by created date) (with token verification)
-router.get('/', verifyToken, async (req, res) => {  
+router.get('/view', verifyToken, async (req, res) => {  
   try {
     const brands = await Brand.find().sort({ createdAt: -1 });
 
     res.status(200).json({
-      brands: brands,
-      status: true,
+      message: 'Brands fetched successfully',
+      brands,
+      status: "success",
     });
   } catch (err) {
     console.error('Error fetching brands:', err);
     res.status(500).json({
       message: 'Error fetching brands data',
       error: err.message,
-      status: false,
+      status: "error",
     });
   }
 });

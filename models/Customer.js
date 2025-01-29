@@ -1,5 +1,14 @@
 import mongoose from "mongoose";
 
+// Enum for status
+const StatusEnum = {
+  Incoming: 0,
+  Pending: 1,
+  Ongoing: 2,
+  Cancel: 3,
+  Closed: 4,
+};
+
 const customerSchema = new mongoose.Schema(
   {
     name: {
@@ -44,7 +53,11 @@ const customerSchema = new mongoose.Schema(
     status: {
       type: Number,
       required: [true, 'Status is required.'],
-      default: 0, 
+      default: StatusEnum.Pending,  // Default to Pending
+      validate: {
+        validator: (value) => Object.values(StatusEnum).includes(value),
+        message: `Status must be one of the following: ${Object.keys(StatusEnum).join(', ')}.`,
+      },
     },
     reason: {
       type: String,
@@ -55,10 +68,65 @@ const customerSchema = new mongoose.Schema(
       unique: [true, 'Call ID must be unique.'],
       required: [true, 'Call ID is required.'],
     },
+    technicianId: {
+      type: String,
+      required: false,
+    },
+    brand: {
+      type: String,
+      required: false,
+    },
+    indoor_model_number: {
+      type: String,
+      required: false,
+    },
+    outdoor_model_number: {
+      type: String,
+      required: false,
+    },
+    indoor_serial_number: {
+      type: String,
+      required: false,
+    },
+    outdoor_serial_number: {
+      type: String,
+      required: false,
+    },
+    model_number: {
+      type: String,
+      required: false,
+    },
+    serial_number: {
+      type: String,
+      required: false,
+    },
+    description: {
+      type: String,
+      required: false,
+    },
+    collected_amount: {
+      type: String,
+      required: false,
+    },
+    sc_type: {
+      type: String,
+      required: false,
+    },
+    closing_date:{
+      type: Date,
+      required: false,
+    },
+    work: {
+      type: String,
+      required: false,
+    },
+    next_date:{
+      type: Date,
+      required: false,
+    }
   },
-  { timestamps: true } 
+  { timestamps: true }
 );
-
 
 const Customer = mongoose.models.Customer || mongoose.model('Customer', customerSchema);
 

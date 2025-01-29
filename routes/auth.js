@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import generateToken from "../middleware/generateToken.js";
-import verifyToken from '../middleware/verifyToken.js';
+import verifyToken from "../middleware/verifyToken.js";
 import validator from 'validator';
 import crypto from 'crypto';
 
@@ -32,6 +32,9 @@ router.post("/register", async (req, res) => {
     if (!validator.isEmail(email)) {
       return res.status(400).json({ message: "Invalid email format", status: "error" });
     }
+    if (!validator.isMobilePhone(mobile, 'any')) {
+      return res.status(400).json({ message: "Invalid mobile number format", status: "error" });
+    }
 
     // ✅ Check if the email already exists
     const userExists = await User.findOne({ email });
@@ -43,17 +46,18 @@ router.post("/register", async (req, res) => {
     const userId = await generateUniqueUserId();
 
     // ✅ Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     // ✅ Create new user
     const user = new User({
       username,
       mobile,
       email,
-      password: hashedPassword,  // Store hashed password
+      password: hashedPassword,
       userId,
     });
-    
+
     // ✅ Save user to the database
     await user.save();
 
@@ -75,23 +79,21 @@ router.post("/register", async (req, res) => {
 // ✅ LOGIN ROUTE
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  
+
   try {
-    // Check if user exists
+    // ✅ Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "User not found", status: "error" });
     }
 
-    // console.log("Login Attempt:", { inputPassword: password, storedPassword: user.password });
-
     // ✅ Compare input password with stored hashed password
-    // const isMatch = await bcrypt.compareSync(password, user.password);
-    // if (!isMatch) {
-    //   return res.status(400).json({ message: "Invalid password", status: "error" });
-    // }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid password", status: "error" });
+    }
 
-    // ✅ Generate token
+    // ✅ Generate JWT Token
     const token = generateToken(user._id);
 
     res.status(200).json({

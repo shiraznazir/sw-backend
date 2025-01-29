@@ -4,20 +4,21 @@ import { nanoid } from "nanoid";
 import Technician from "../models/Technician.js";
 import path from "path";
 import fs from "fs";
-import verifyToken from '../middleware/verifyToken.js'; 
+import verifyToken from "../middleware/verifyToken.js"; 
 import { AREALIST } from "../constants.js";
 
 const router = express.Router();
 
+// Ensure uploads directory exists
 const uploadDir = "uploads";
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 // Configure Multer for image uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir); 
+    cb(null, path.join(uploadDir)); 
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${nanoid(6)}`;
@@ -26,18 +27,15 @@ const storage = multer.diskStorage({
   },
 });
 
-
 const fileFilter = (req, file, cb) => {
   const allowedTypes = /jpeg|jpg|png|webp/;
-  const extName = allowedTypes.test(
-    path.extname(file.originalname).toLowerCase()
-  );
+  const extName = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimeType = allowedTypes.test(file.mimetype);
 
   if (extName && mimeType) {
     cb(null, true);
   } else {
-    cb(new Error("Only image files (jpeg, jpg, png, webp) are allowed."));
+    cb(new Error("Invalid file type. Only jpeg, jpg, png, and webp are allowed."));
   }
 };
 
@@ -67,23 +65,22 @@ async function generateUniqueTechnicianId() {
 
 // Create a new technician
 router.post("/create", verifyToken, upload, async (req, res) => {
-  const { name, email, mobileNumber, address, id_proof, area } = req.body;
-
-  // Check if images are uploaded
-  if (!req.files || !req.files.front_image || !req.files.back_image) {
-    return res
-      .status(400)
-      .json({ message: "Both front and back images are required." });
-  }
-
-
-  const front_image = req.files.front_image[0].path; 
-  const back_image = req.files.back_image[0].path;
-
   try {
-    const technicianId = await generateUniqueTechnicianId(); // Unique technician ID
+    const { name, email, mobileNumber, address, id_proof, area } = req.body;
 
-    // Create a new technician instance
+    if (!name || !email || !mobileNumber || !address || !id_proof || !area) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    // if (!req.files || !req.files.front_image || !req.files.back_image) {
+    //   return res.status(400).json({ message: "Both front and back images are required." });
+    // }
+
+    // const front_image = req.files.front_image[0].path;
+    // const back_image = req.files.back_image[0].path;
+
+    const technicianId = await generateUniqueTechnicianId();
+
     const newTechnician = new Technician({
       technicianId,
       name,
@@ -91,8 +88,8 @@ router.post("/create", verifyToken, upload, async (req, res) => {
       mobileNumber,
       address,
       id_proof,
-      front_image,
-      back_image,
+      // front_image,
+      // back_image,
       area,
     });
 
@@ -100,26 +97,24 @@ router.post("/create", verifyToken, upload, async (req, res) => {
     res.status(201).json({
       message: "Technician added successfully",
       technician: savedTechnician,
-      status: true,
+      status: "success",
     });
   } catch (err) {
     console.error("Error saving technician:", err);
-    res
-      .status(500)
-      .json({ message: "Error saving technician data", error: err.message });
+    res.status(500).json({ message: "Error saving technician data", error: err.message });
   }
 });
 
-// ✅ GET all technician data
+// Helper function to find area label
 const findArea = (param) => {
   const area = AREALIST.find(
-    (item) =>
-      item.value === param || item.label.toLowerCase() === param.toLowerCase()
+    (item) => item.value === param || item.label.toLowerCase() === param?.toLowerCase()
   );
-  return area ? area.label : null;
+  return area ? area.label : "Unknown";
 };
 
-router.get("/", verifyToken, async (req, res) => {
+// ✅ GET all technician data
+router.get("/view", verifyToken, async (req, res) => {
   try {
     const technicians = await Technician.find();
 
@@ -145,48 +140,47 @@ router.get("/", verifyToken, async (req, res) => {
 });
 
 // ✅ GET technician data by technicianId
-router.get("/:technicianId", verifyToken, async (req, res) => {
-  const { technicianId } = req.params;
-
+router.get("/view/:technicianId", verifyToken, async (req, res) => {
   try {
-    // Find the technician by technicianId
+    const { technicianId } = req.params;
     const technician = await Technician.findOne({ technicianId });
 
-    // If technician not found, return 404
     if (!technician) {
-      return res.status(404).json({
-        message: "Technician not found",
-        status: false,
-      });
+      return res.status(404).json({ message: "Technician not found", status: false });
     }
 
-    // Ensure the file paths are strings before passing to path.basename
-    const front_image_path =
-      technician.front_image instanceof Buffer
-        ? technician.front_image.toString()
-        : technician.front_image;
+    res.status(200).json({ technician, status: "success" });
+  } catch (err) {
+    console.error(`Error fetching technician with ID ${technicianId}:`, err);
+    res.status(500).json({ message: "Error fetching technician data", error: err.message });
+  }
+});
 
-    const back_image_path =
-      technician.back_image instanceof Buffer
-        ? technician.back_image.toString()
-        : technician.back_image;
+// ✅ Update technician data by technicianId
+router.put("/update/:technicianId", verifyToken, async (req, res) => {
+  try {
+    const { technicianId } = req.params;
+    const updatedData = req.body;
+    
+    const updatedTechnician = await Technician.findOneAndUpdate(
+      { technicianId },
+      updatedData,
+      { new: true }
+    );
 
-    // Map the image paths to URLs
-    const data = {
-      ...technician.toObject(),
-      front_image: `uploads/${path.basename(front_image_path)}`, 
-      back_image: `uploads/${path.basename(back_image_path)}`, 
-      area: findArea(technician.area),
-    };
+    if (!updatedTechnician) {
+      return res.status(404).json({ message: "Technician not found", status: false });
+    }
 
     res.status(200).json({
-      technician: data,
-      status: true,
+      message: "Technician updated successfully",
+      technician: updatedTechnician,
+      status: "success",
     });
   } catch (err) {
-    console.error("Error fetching technician data:", err);
+    console.error("Error updating technician data:", err);
     res.status(500).json({
-      message: "Error fetching technician data",
+      message: "Error updating technician data",
       error: err.message,
     });
   }

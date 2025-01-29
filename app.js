@@ -53,7 +53,7 @@ mongoose
 import authRoutes from "./routes/auth.js";
 import customerRoutes from "./routes/customer.js";
 import technicianRoutes from "./routes/technician.js";
-import brandsRoutes from "./routes/technician.js";
+import brandsRoutes from "./routes/brands.js";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/customer", customerRoutes);
@@ -62,7 +62,7 @@ app.use("/api/v1/brands", brandsRoutes);
 
 
 // Start server
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8088;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
