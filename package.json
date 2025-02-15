@@ -1,13 +1,13 @@
 {
-  "name": "service-walah",
+  "name": "sw-backend",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
     "dev": "nodemon app.js",
-    "build": "echo 'No build step required'",
-    "lint": "eslint ."
+    "start": "node app.js",
+    "build": "echo 'No build step required for Node.js/Express'",
+    "deploy": "npm run build && rsync -azP -e 'ssh -i ~/.ssh/LightsailDefaultKey.pem' --exclude=.git --exclude=node_modules . ubuntu@13.202.232.243:/home/ubuntu/apps/backend"
   },
   "type": "module",
   "keywords": [],
@@ -19,6 +19,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "mongodb": "^6.12.0",

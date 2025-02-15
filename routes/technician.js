@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import Technician from "../models/Technician.js";
 import path from "path";
 import fs from "fs";
-import verifyToken from "../middleware/verifyToken.js"; 
+import verifyToken from "../middleware/verifyToken.js";
 import { AREALIST } from "../constants.js";
 
 const router = express.Router();
@@ -18,12 +18,12 @@ if (!fs.existsSync(uploadDir)) {
 // Configure Multer for image uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(uploadDir)); 
+    cb(null, path.join(uploadDir));
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${nanoid(6)}`;
     const ext = path.extname(file.originalname);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`); 
+    cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
   },
 });
 
@@ -42,10 +42,10 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, 
+  limits: { fileSize: 2 * 1024 * 1024 },
 }).fields([
   { name: "front_image", maxCount: 1 },
-  { name: "back_image", maxCount: 1 }, 
+  { name: "back_image", maxCount: 1 },
 ]);
 
 // Helper function to generate a unique technician ID
@@ -63,21 +63,21 @@ async function generateUniqueTechnicianId() {
   return technicianId;
 }
 
-// Create a new technician
+// ✅ Create a new technician
 router.post("/create", verifyToken, upload, async (req, res) => {
   try {
     const { name, email, mobileNumber, address, id_proof, area } = req.body;
 
     if (!name || !email || !mobileNumber || !address || !id_proof || !area) {
-      return res.status(400).json({ message: "All fields are required." });
+      return res.status(400).json({ message: "All fields are required.", status: false });
     }
 
-    // if (!req.files || !req.files.front_image || !req.files.back_image) {
-    //   return res.status(400).json({ message: "Both front and back images are required." });
-    // }
+    if (!req.files || !req.files.front_image || !req.files.back_image) {
+      return res.status(400).json({ message: "Both front and back images are required.", status: false });
+    }
 
-    // const front_image = req.files.front_image[0].path;
-    // const back_image = req.files.back_image[0].path;
+    const front_image = req.files.front_image[0].path;
+    const back_image = req.files.back_image[0].path;
 
     const technicianId = await generateUniqueTechnicianId();
 
@@ -88,8 +88,8 @@ router.post("/create", verifyToken, upload, async (req, res) => {
       mobileNumber,
       address,
       id_proof,
-      // front_image,
-      // back_image,
+      front_image,
+      back_image,
       area,
     });
 
@@ -101,7 +101,7 @@ router.post("/create", verifyToken, upload, async (req, res) => {
     });
   } catch (err) {
     console.error("Error saving technician:", err);
-    res.status(500).json({ message: "Error saving technician data", error: err.message });
+    res.status(500).json({ message: "Error saving technician data", error: err.message, status: false });
   }
 });
 
@@ -119,22 +119,20 @@ router.get("/view", verifyToken, async (req, res) => {
     const technicians = await Technician.find();
 
     const techniciansData = technicians.map((tech) => ({
-      technicianId: tech.technicianId,
-      name: tech.name,
-      mobileNumber: tech.mobileNumber,
-      email: tech.email,
+      ...tech.toObject(),
       area: findArea(tech.area),
     }));
 
     res.status(200).json({
       technicians: techniciansData,
-      status: true,
+      status: "success",
     });
   } catch (err) {
     console.error("Error fetching technicians data:", err);
     res.status(500).json({
       message: "Error fetching technicians data",
       error: err.message,
+      status: false,
     });
   }
 });
@@ -152,7 +150,7 @@ router.get("/view/:technicianId", verifyToken, async (req, res) => {
     res.status(200).json({ technician, status: "success" });
   } catch (err) {
     console.error(`Error fetching technician with ID ${technicianId}:`, err);
-    res.status(500).json({ message: "Error fetching technician data", error: err.message });
+    res.status(500).json({ message: "Error fetching technician data", error: err.message, status: false });
   }
 });
 
@@ -161,7 +159,7 @@ router.put("/update/:technicianId", verifyToken, async (req, res) => {
   try {
     const { technicianId } = req.params;
     const updatedData = req.body;
-    
+
     const updatedTechnician = await Technician.findOneAndUpdate(
       { technicianId },
       updatedData,
@@ -182,6 +180,7 @@ router.put("/update/:technicianId", verifyToken, async (req, res) => {
     res.status(500).json({
       message: "Error updating technician data",
       error: err.message,
+      status: false,
     });
   }
 });

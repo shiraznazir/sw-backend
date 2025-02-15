@@ -51,11 +51,11 @@ router.post('/create', upload.none(), async (req, res) => {
       type,
       status: 0,  
     });
-
+    
     const savedCustomer = await newCustomer.save();
   
-    const welcomeMessage = "Welcome to Service Walah";
-    await sendWhatsAppMessage({ mobileNo: mobileNumber, message: welcomeMessage });
+    // const welcomeMessage = "Welcome to Service Walah";
+    // await sendWhatsAppMessage({ mobileNo: mobileNumber, message: welcomeMessage });
 
     res.status(201).json({
       message: 'Customer added successfully',

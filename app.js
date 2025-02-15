@@ -3,13 +3,14 @@ import express from "express";
 import multer from "multer";
 import mongoose from "mongoose";
 import cors from "cors";
+import helmet from 'helmet';
 
 dotenv.config();
 
 const app = express();
 
 app.use('/uploads', express.static('uploads'));
-
+app.use(helmet());
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -28,6 +29,7 @@ app.use(
       "http://localhost:3000",
       "http://localhost:8080",
       "http://localhost:3001",
+      "http://localhost:3002",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -62,7 +64,7 @@ app.use("/api/v1/brands", brandsRoutes);
 
 
 // Start server
-const PORT = process.env.PORT || 8088;
+const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

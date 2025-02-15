@@ -1,10 +1,10 @@
-import express from 'express';
-import bcrypt from 'bcryptjs';
-import User from '../models/User.js';
+import express from "express";
+import bcrypt from "bcryptjs";
+import User from "../models/User.js";
 import generateToken from "../middleware/generateToken.js";
 import verifyToken from "../middleware/verifyToken.js";
-import validator from 'validator';
-import crypto from 'crypto';
+import validator from "validator";
+import crypto from "crypto";
 
 const router = express.Router();
 
@@ -13,7 +13,10 @@ const generateUniqueUserId = async () => {
   let userId;
   let exists = true;
   while (exists) {
-    userId = `USER-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
+    userId = `USER-${Date.now()}-${crypto
+      .randomBytes(2)
+      .toString("hex")
+      .toUpperCase()}`;
     const userExists = await User.findOne({ userId });
     if (!userExists) exists = false;
   }
@@ -27,19 +30,27 @@ router.post("/register", async (req, res) => {
   try {
     // ✅ Input validation
     if (!username || !mobile || !email || !password) {
-      return res.status(400).json({ message: "All fields are required", status: "error" });
+      return res
+        .status(400)
+        .json({ message: "All fields are required", status: "error" });
     }
     if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: "Invalid email format", status: "error" });
+      return res
+        .status(400)
+        .json({ message: "Invalid email format", status: "error" });
     }
-    if (!validator.isMobilePhone(mobile, 'any')) {
-      return res.status(400).json({ message: "Invalid mobile number format", status: "error" });
+    if (!validator.isMobilePhone(mobile, "any")) {
+      return res
+        .status(400)
+        .json({ message: "Invalid mobile number format", status: "error" });
     }
 
     // ✅ Check if the email already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(400).json({ message: "Email already in use", status: "error" });
+      return res
+        .status(400)
+        .json({ message: "Email already in use", status: "error" });
     }
 
     // ✅ Generate a unique User ID
@@ -84,13 +95,17 @@ router.post("/login", async (req, res) => {
     // ✅ Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: "User not found", status: "error" });
+      return res
+        .status(400)
+        .json({ message: "User not found", status: "error" });
     }
 
     // ✅ Compare input password with stored hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid password", status: "error" });
+      return res
+        .status(400)
+        .json({ message: "Invalid password", status: "error" });
     }
 
     // ✅ Generate JWT Token
@@ -115,9 +130,17 @@ router.get("/profile", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select("-password");
     if (!user) {
-      return res.status(404).json({ message: "User not found", status: "error" });
+      return res
+        .status(404)
+        .json({ message: "User not found", status: "error" });
     }
-    res.status(200).json({ message: "Profile fetched successfully", user, status: "success" });
+    res
+      .status(200)
+      .json({
+        message: "Profile fetched successfully",
+        user,
+        status: "success",
+      });
   } catch (error) {
     console.error("Profile error:", error.message);
     res.status(500).json({ message: "Server error", status: "error" });
