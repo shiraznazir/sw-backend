@@ -1,80 +1,70 @@
-import express from 'express';
-import Brand from '../models/Brand.js';
-import { nanoid } from 'nanoid';  
-import verifyToken from '../middleware/verifyToken.js'; 
+import express from "express";
+import Brand from "../models/Brand.js";
 
 const router = express.Router();
 
-// Helper function to generate a unique brand ID
-async function generateBrandId() {
-  let brandId;
-  let isUnique = false;
-
-  while (!isUnique) {
-    brandId = `BRAND-${nanoid(8).toUpperCase()}`;  
-    const existingBrand = await Brand.findOne({ brandId });  
-    if (!existingBrand) {
-      isUnique = true;
-    }
-  }
-  return brandId;
-}
-
-// ✅ Create a new brand (with token verification)
-router.post('/create', verifyToken, async (req, res) => { 
-  const { brandName } = req.body;
-  
-  // Validation
-  if (!brandName || typeof brandName !== 'string' || !brandName.trim()) {
-    return res.status(400).json({ 
-      message: 'Brand name is required and must be a valid string', 
-      status: "error" 
-    });
-  }
-
+router.post("/create", async (req, res) => {
   try {
-    // Generate a unique brand ID
-    const brandId = await generateBrandId();
-
-    // Save brand data to the database
-    const newBrand = new Brand({
-      brandId,  
-      brand: brandName.trim(),
-    });
-
-    const savedBrand = await newBrand.save();
-
+    const brand = new Brand(req.body);
+    const savedBrand = await brand.save();
     res.status(201).json({
-      message: 'Brand added successfully',
-      brand: savedBrand, 
       status: "success",
+      message: "Brand created successfully",
+      data: savedBrand,
+      statusCode: 201,
     });
-  } catch (err) {
-    console.error('Error saving brand:', err);
-    res.status(500).json({ 
-      message: 'Error saving brand data', 
-      error: err.message, 
-      status: "error" 
+  } catch (error) {
+    if (error.message.includes("Duplicate")) {
+      return res.status(409).json({
+        status: "error",
+        error: "Conflict",
+        message: error.message,
+        statusCode: 409,
+      });
+    }
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        status: "error",
+        error: "Bad Request",
+        message: Object.values(error.errors).map(e => e.message).join(", "),
+        statusCode: 400,
+      });
+    }
+    res.status(500).json({
+      status: "error",
+      error: "Internal Server Error",
+      message: "Failed to create brand",
+      statusCode: 500,
     });
   }
 });
 
-// ✅ GET all brands data (sorted by created date) (with token verification)
-router.get('/view', verifyToken, async (req, res) => {  
+router.get("/view", async (req, res) => {
   try {
-    const brands = await Brand.find().sort({ createdAt: -1 });
-
+    const brands = await Brand.find().sort({ createdAt: -1 }).lean();
+    if (!brands.length) {
+      return res.status(200).json({
+        status: "success",
+        message: "No brands found",
+        data: [],
+        statusCode: 200,
+      });
+    }
+    const lastModified = Math.max(...brands.map(b => b.updatedAt.getTime()));
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("Last-Modified", new Date(lastModified).toUTCString());
     res.status(200).json({
-      message: 'Brands fetched successfully',
-      brands,
       status: "success",
+      message: "Brands retrieved successfully",
+      data: brands,
+      statusCode: 200,
     });
-  } catch (err) {
-    console.error('Error fetching brands:', err);
+  } catch (error) {
     res.status(500).json({
-      message: 'Error fetching brands data',
-      error: err.message,
       status: "error",
+      error: "Internal Server Error",
+      message: "Failed to fetch brands",
+      statusCode: 500,
     });
   }
 });
