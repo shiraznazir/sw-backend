@@ -78,6 +78,12 @@ userSchema.post("save", function (error, doc, next) {
   if (error.name === "MongoServerError" && error.code === 11000) {
     const field = Object.keys(error.keyValue)[0];
     next(new Error(`Duplicate ${field} detected: ${error.keyValue[field]}`));
+    if (error.keyValue) {
+      const field = Object.keys(error.keyValue)[0];
+      next(new Error(`Duplicate ${field} detected: ${error.keyValue[field]}`));
+    } else {
+      next(new Error("Duplicate key error detected"));
+    }
   } else {
     next(error);
   }

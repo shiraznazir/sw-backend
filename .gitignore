@@ -1,9 +1,11 @@
 # Node.js dependencies
 node_modules/
+jspm_packages/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+.npm
 
 # Environment variables
 .env
@@ -11,15 +13,26 @@ pnpm-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+*.env
+!*.env.example
 
 # Logs
 logs/
 *.log
 debug.log
+*.pid
+*.seed
+*.pid.lock
 
 # OS-specific files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+Desktop.ini
 
 # Build and runtime files
 dist/
@@ -28,9 +41,13 @@ tmp/
 temp/
 .cache/
 *.tsbuildinfo
+.eslintcache
+.node_repl_history
+*.tgz
 
 # Coverage reports
 coverage/
+.nyc_output/
 
 # Database files
 *.sqlite
@@ -45,6 +62,7 @@ coverage/
 *.ntvs*
 *.njsproj
 *.sln
+*.swp
 
 # Docker
 docker-compose.override.yml

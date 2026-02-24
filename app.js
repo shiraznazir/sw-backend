@@ -54,7 +54,7 @@ app.options("*", cors(corsOptions));
 
 // MongoDB Connection
 mongoose.set("strictQuery", true);
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGO_URI, {
   maxPoolSize: 10,
   minPoolSize: 2,
 }).then(() => console.log("✅ Connected to MongoDB"))
