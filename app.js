@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express from "express";
-import multer from "multer";
 import mongoose from "mongoose";
 import cors from "cors";
 import path from "path";
@@ -15,7 +14,8 @@ app.disable("x-powered-by"); // Hide framework information
 
 // CORS Configuration
 const allowedOrigins = [
-    "https://www.servicewalah.com",
+    "https://www.servicewalah.in",
+    "https://sw-backend-2o0u.onrender.com/",
     "https://servicewalah.com",
     "http://localhost:3000",
     "http://localhost:8080",
@@ -37,6 +37,8 @@ const allowedOrigins = [
     optionsSuccessStatus: 204,
   };
 
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // Static Files
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
@@ -48,9 +50,6 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
 // Body Parsing
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 
 // MongoDB Connection
 mongoose.set("strictQuery", true);
@@ -99,7 +98,18 @@ const gracefulShutdown = async (signal) => {
   }
 };
 
-["unhandledRejection", "uncaughtException", "SIGINT", "SIGTERM"].forEach(signal => process.on(signal, () => gracefulShutdown(signal)));
+process.on("unhandledRejection", (err) => {
+  console.error("🚨 Unhandled Rejection:", err);
+  gracefulShutdown("unhandledRejection");
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("🚨 Uncaught Exception:", err);
+  gracefulShutdown("uncaughtException");
+});
+
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 
 // Server Start
 const PORT = process.env.PORT || 8080;
