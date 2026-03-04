@@ -6,8 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon app.js",
-    "start": "node app.js",
-    "build": "echo 'No build step required for Node.js/Express'"
+    "start": "node app.js"
   },
   "keywords": [],
   "author": "",

@@ -21,10 +21,10 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
-      - name: Build Project
-        run: npm run build
+      - name: Build application
+        run: npm run build --if-present
 
       - name: Create deployment package (without node_modules)
         run: |
@@ -33,8 +33,7 @@ jobs:
           [ -d routes ] && cp -r routes deploy/
           [ -d models ] && cp -r models deploy/
           [ -d middleware ] && cp -r middleware deploy/
-          [ -d service ] && cp -r service deploy/
-          [ -f constants.js ] && cp constants.js deploy/
+          [ -d utils ] && cp -r utils deploy/
           cp package*.json deploy/
           cp ecosystem.config.cjs deploy/
           # Copy .env.example if exists
@@ -77,8 +76,12 @@ jobs:
           ssh -i lalita-park.pem -o StrictHostKeyChecking=no \
             ${EC2_USERNAME}@${EC2_HOST} << 'EOF'
             
+            # Ensure app directory exists
+            sudo mkdir -p /var/www/sw-backend
+            sudo chown $USER:$USER /var/www/sw-backend
+
             # Navigate to app directory
-            cd /var/www/sw-backend
+            cd /var/www/sw-backend || exit 1
 
             # Fix ownership first (important!)
             echo "Fixing directory ownership..."
@@ -86,7 +89,7 @@ jobs:
             
             
             # Backup current version
-            if [ -f "app.js" ]; then
+            if [ -f "package.json" ]; then
               timestamp=$(date +%Y%m%d_%H%M%S)
               mkdir -p backups
               tar -czf backups/backup_${timestamp}.tar.gz --exclude=node_modules --exclude=backups --exclude=uploads --exclude=.git . 2>/dev/null || true
@@ -194,4 +197,4 @@ jobs:
             fi
           EOF
 
-          rm private_key.pem
+          rm lalita-park.pem
