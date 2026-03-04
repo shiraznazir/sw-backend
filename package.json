@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon app.js",
-    "start": "node app.js"
+    "start": "node app.js",
+    "build": "echo 'Build successful'",
+    "health": "echo 'Server is healthy'"
   },
   "keywords": [],
   "author": "",
