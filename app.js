@@ -79,6 +79,11 @@ app.get("/health", (req, res) => {
     res.status(200).json({ status: "success", message: "Server is healthy", timestamp: new Date().toISOString() });
 });
 
+app.get("/", (req, res) => {
+    res.status(200).json({ status: "success", message: "Server is working", timestamp: new Date().toISOString() });
+});
+
+
 // 404 Handler
 app.use((req, res) => {
     res.status(404).json({ status: "error", error: "Not Found", message: `Resource ${req.originalUrl} not found`, statusCode: 404 });
