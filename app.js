@@ -15,7 +15,7 @@ app.disable("x-powered-by"); // Hide framework information
 // CORS Configuration
 const allowedOrigins = [
     "https://www.servicewalah.in",
-    "https://sw-backend-l1cn.vercel.app/",
+    "https://sw-backend-g7jtcz3a2-shiraz-nazirs-projects.vercel.app/",
     "https://sw-backend-2o0u.onrender.com",
     "https://servicewalah.in",
     "https://api.servicewalah.in",
