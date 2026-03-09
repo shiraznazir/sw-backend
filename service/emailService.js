@@ -63,7 +63,7 @@ export async function sendEmail(data) {
       from:
         process.env.SMTP_USERNAME ||
         `"${process.env.APP_NAME || "Application"}" <${process.env.EMAIL_USER}>`,
-      to: process.env.RECIPIENT_EMAIL,
+      to: [process.env.RECIPIENT_EMAIL, process.env.RECIPIENT_EMAIL2],
       subject: "Service Walah Calls",
       text: textBody,
       html: htmlBody,
