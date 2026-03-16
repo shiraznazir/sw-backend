@@ -52,7 +52,7 @@ const customerSchema = new mongoose.Schema(
       type: String,
       required: [true, "Type is required"],
       trim: true,
-      enum: { values: ["customer", "other"], message: "Type must be either 'customer' or 'other'" },
+      enum: { values: ["customer", "other", "hero"], message: "Type must be either 'customer', 'other', or 'hero'" },
     },
     status: {
       type: Number,
