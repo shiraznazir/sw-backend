@@ -4,6 +4,7 @@ import asyncHandler from "express-async-handler";
 import { nanoid } from "nanoid";
 import dotenv from "dotenv";
 import Customer from "../models/Customer.js";
+import Lead from "../models/Lead.js";
 import verifyToken from "../middleware/verifyToken.js";
 import { sendEmail } from "../service/emailService.js";
 
@@ -29,11 +30,42 @@ const generateUniqueCallId = async () => {
   
   while (!isUnique) {
     callId = `CALL-${Date.now().toString(36)}-${nanoid(6).toUpperCase()}`;
-    isUnique = !(await Customer.exists({ callId }));
+    const [customerExists, leadExists] = await Promise.all([
+      Customer.exists({ callId }),
+      Lead.exists({ callId })
+    ]);
+    isUnique = !customerExists && !leadExists;
   }
   
   return callId;
 };
+
+// ✅ Create Lead
+router.post("/lead/create", upload.none(), sanitizeInput, asyncHandler(async (req, res) => {
+  const { name, mobileNumber, type } = req.body;
+
+  // 🚀 Improved Validation
+  if (![name, mobileNumber, type].every(Boolean)) {
+    return res.status(400).json({ status: "error", message: "All fields are required" });
+  }
+  
+  if (!/^\d{10}$/.test(mobileNumber)) {
+    return res.status(400).json({ status: "error", message: "Invalid mobile number" });
+  }
+
+  const callId = await generateUniqueCallId();
+  const newLead = new Lead({
+    callId, name, mobileNumber, type,
+    status: 0, createdAt: new Date(), updatedAt: new Date()
+  });
+
+  const savedLead = await newLead.save();
+  await sendEmail(savedLead);
+
+  res.setHeader("Cache-Control", "no-store");
+  res.status(201).json({ status: "success", message: "Lead created successfully", data: savedLead });
+}));
+
 
 // ✅ Create Customer
 router.post("/create", upload.none(), sanitizeInput, asyncHandler(async (req, res) => {
@@ -67,22 +99,29 @@ router.post("/create", upload.none(), sanitizeInput, asyncHandler(async (req, re
 
 // ✅ Get Number of Calls
 router.get("/callsmeasure", verifyToken, asyncHandler(async (req, res) => {
-  const statuses = [0, 1, 2, 3];
+  const statuses = [0, 1, 2, 3, 4];
   const counts = await Promise.all(statuses.map(status => Customer.countDocuments({ type: "customer", status })));
   
   res.json({
     status: "success",
-    data: { incoming: counts[0], ongoing: counts[1], pending: counts[2], closed: counts[3] }
+    data: { 
+      incoming: counts[0], 
+      pending: counts[1], 
+      ongoing: counts[2], 
+      cancelled: counts[3],
+      closed: counts[4] 
+    }
   });
 }));
 
 // ✅ Get Customer Status
 const getStatus = (status) => ({
   0: "Incoming",
-  1: "Ongoing",
-  2: "Pending",
-  3: "Closed"
-})[status] || "Cancel";
+  1: "Pending",
+  2: "Ongoing",
+  3: "Cancelled",
+  4: "Closed"
+})[status] || "Unknown";
 
 // ✅ Get Customers with Pagination
 router.get("/", verifyToken, asyncHandler(async (req, res) => {
